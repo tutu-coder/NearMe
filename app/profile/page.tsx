@@ -15,13 +15,15 @@ interface ProviderProfile {
   id: string;
   business_name: string;
   business_email: string;
-  // add other fields if needed
 }
 
 export default function ProfilePage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [providerProfile, setProviderProfile] = useState<ProviderProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState('');
+  const [surname, setSurname] = useState('');
   const router = useRouter();
 
   useEffect(() => {
@@ -35,7 +37,6 @@ export default function ProfilePage() {
         return;
       }
 
-      // Fetch basic user info from profiles
       const { data: profileData } = await supabase
         .from('profiles')
         .select('name, surname')
@@ -49,7 +50,9 @@ export default function ProfilePage() {
         surname: profileData?.surname || '',
       });
 
-      // Fetch provider info by user_id
+      setName(profileData?.name || '');
+      setSurname(profileData?.surname || '');
+
       const { data: providerData } = await supabase
         .from('providers')
         .select('*')
@@ -65,6 +68,24 @@ export default function ProfilePage() {
 
     fetchUser();
   }, []);
+
+  const handleSave = async () => {
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ name, surname })
+      .eq('id', user.id);
+
+    if (error) {
+      console.error('Error updating profile:', error.message);
+      alert('Failed to update profile.');
+    } else {
+      setUser({ ...user, name, surname });
+      setEditing(false);
+      alert('Profile updated successfully!');
+    }
+  };
 
   const goToBusinessProfile = () => {
     if (providerProfile?.id) {
@@ -82,12 +103,30 @@ export default function ProfilePage() {
 
       <div className="mb-6">
         <label className="block font-semibold">Name</label>
-        <p>{user.name}</p>
+        {editing ? (
+          <input
+            type="text"
+            className="border p-2 w-full rounded"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        ) : (
+          <p>{user.name}</p>
+        )}
       </div>
 
       <div className="mb-6">
         <label className="block font-semibold">Surname</label>
-        <p>{user.surname}</p>
+        {editing ? (
+          <input
+            type="text"
+            className="border p-2 w-full rounded"
+            value={surname}
+            onChange={(e) => setSurname(e.target.value)}
+          />
+        ) : (
+          <p>{user.surname}</p>
+        )}
       </div>
 
       <div className="mb-6">
@@ -95,11 +134,39 @@ export default function ProfilePage() {
         <p>{user.email}</p>
       </div>
 
+      {editing ? (
+        <div className="flex gap-4">
+          <button
+            onClick={handleSave}
+            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+          >
+            Save
+          </button>
+          <button
+            onClick={() => setEditing(false)}
+            className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
+          >
+            Cancel
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={() => setEditing(true)}
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+        >
+          Edit Profile
+        </button>
+      )}
+
       {providerProfile && (
         <div className="mt-10 p-4 border rounded bg-gray-50">
           <h2 className="text-xl font-bold mb-3">Business Profile</h2>
-          <p><strong>Business Name:</strong> {providerProfile.business_name}</p>
-          <p><strong>Business Email:</strong> {providerProfile.business_email}</p>
+          <p>
+            <strong>Business Name:</strong> {providerProfile.business_name}
+          </p>
+          <p>
+            <strong>Business Email:</strong> {providerProfile.business_email}
+          </p>
 
           <button
             onClick={goToBusinessProfile}
