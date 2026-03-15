@@ -101,7 +101,8 @@ export default function ServicesPage() {
   const [showModal, setShowModal] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState<any>(null);
   const [formData, setFormData] = useState({ name: '', contact: '', message: '' });
-
+  const [submittedServiceType, setSubmittedServiceType] = useState('');
+  const [submittedLocation, setSubmittedLocation] = useState('');
   const [showClaimModal, setShowClaimModal] = useState(false);
   const [claimProvider, setClaimProvider] = useState<any>(null);
   const [claimForm, setClaimForm] = useState({ name: '', email: '', phone: '', message: '' });
@@ -194,7 +195,11 @@ export default function ServicesPage() {
         location={location}
         setLocation={setLocation}
         locationFocused={locationFocused}
-        onSearch={() => fetchProviders()}
+        onSearch={() => {
+        setSubmittedServiceType(serviceType);
+        setSubmittedLocation(location);
+        fetchProviders();
+}}
       />
 
       {/* SEARCH RESULTS */}
@@ -202,8 +207,8 @@ export default function ServicesPage() {
 
         {loading && <p className="text-center text-gray-500">Searching...</p>}
 
-        {!loading && results.length === 0 && (serviceType || location) && (
-          <p className="text-center text-gray-400 mt-8">No matching providers found.</p>
+        {!loading && results.length === 0 && (submittedServiceType || submittedLocation) && (
+        <p className="text-center text-gray-400 mt-8">No matching providers found.</p>
         )}
 
         {results.length > 0 && (
